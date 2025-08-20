@@ -1,0 +1,6 @@
+# --- dependencies to be downloaded from this requirements.txt file ---
+
+requests
+tqdm
+pyliftover
+python-dotenv
