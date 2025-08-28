@@ -120,11 +120,3 @@ required.
 
 ------------------------------------------------------------------------
 
-## Notes
-
--   Ensure you have a stable internet connection while downloading
-    datasets.\
--   For COSMIC data, you may need special access permissions depending
-    on the dataset.\
-
-------------------------------------------------------------------------
