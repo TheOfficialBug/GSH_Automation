@@ -126,7 +126,5 @@ required.
     datasets.\
 -   For COSMIC data, you may need special access permissions depending
     on the dataset.\
--   Logs can optionally be saved using utilities in `utils/logger.py`
-    (currently commented out in `main.py`).
 
 ------------------------------------------------------------------------
