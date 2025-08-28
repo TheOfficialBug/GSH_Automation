@@ -30,6 +30,8 @@ control over each dataset.
 GSH_Automation/
 │
 ├── main.py                 # Entry point for running the pipeline (choice-based menu system)
+├── config/
+│   ├── setting.py          #url links
 ├── scripts/                # Contains all modular scripts for downloading/processing data
 │   ├── ensembl.py          # Downloads Ensembl dataset
 │   ├── cosmic.py           # Downloads COSMIC dataset
