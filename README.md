@@ -19,8 +19,6 @@ control over each dataset.
     control over data downloads and processing.\
 -   **Environment Setup**: Easy setup via Conda with required
     dependencies listed.\
--   **Logging Support**: (Pluggable) utilities to log processes and
-    results for reproducibility.\
 -   **Modular Scripts**: Each dataset and preprocessing step is isolated
     in its own module under the `scripts/` folder.
 
@@ -43,9 +41,6 @@ GSH_Automation/
 │   ├── rna_files.py        # Downloads lncRNA and tRNA files
 │   ├── gaps_ftp.py         # Downloads UCSC Gaps FTP data
 │   └── wget.py             # Downloads additional chromosome info via WGET
-│
-├── utils/                  # Utility functions for the pipeline
-│   └── logger.py           # Logging utilities to track processes and save logs
 │
 └── README.md               # Documentation (this file)
 ```
