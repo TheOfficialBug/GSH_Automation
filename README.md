@@ -1,124 +1,299 @@
-# GSH_Automation
+# GSH Pipeline - Genomic Safe Harbor Identification
 
-GSH_Automation is a bioinformatics automation pipeline designed to
-simplify the downloading, preprocessing, and preparation of genomic
-datasets from multiple sources like Ensembl, COSMIC, miRGene, Orthologs,
-EnhancerAtlas, UCSC, and more.\
-This repository provides a **choice-based menu system** (`main.py`) to
-enable users to selectively execute tasks, ensuring modularity and
-control over each dataset.
+**Scalable and Secure Genomic Safe Harbor Identification Pipeline**  
+**Using Hybrid AWS Architecture**
+
+Based on: [GSH Pipeline: AWS Hybrid Deployment - Term Project Report](../DEPLOYMENT_GUIDE.md)  
+Authors: [Your Names]  
+Institution: University of Pennsylvania | UT Austin | Iowa State University  
+Date: May 2026
+
+------------------------------------------------------------------------
+
+## Overview
+
+GSH (Genomic Safe Harbor) Pipeline is an automated bioinformatics platform for identifying intergenic and non-regulatory regions suitable for safe genetic integration in *Danio rerio* (zebrafish). The pipeline simplifies the downloading, preprocessing, and analysis of genomic datasets from multiple sources including Ensembl, COSMIC, miRGene, Orthologs, EnhancerAtlas, UCSC, and more.
+
+This implementation features:
+- **Containerized Deployment**: Docker ensures reproducibility across environments
+- **Hybrid AWS Architecture**: Cloud coordination with on-premises data processing
+- **Multi-Institutional Access**: Enable researchers across Penn, UT Austin, and Iowa State
+- **Defense-in-Depth Security**: Encryption, access control, and audit logging
+- **Cost Efficiency**: 30x cheaper than traditional on-premise infrastructure
+
+------------------------------------------------------------------------
+
+## Architecture
+
+### Hybrid Design
+
+```
+┌─────────────────────────┐         ┌──────────────────────────┐
+│   Campus Networks       │         │   AWS Cloud (Region)     │
+│                         │         │                          │
+│  ┌──────────────────┐   │         │  ┌───────────────────┐   │
+│  │  Genome Files    │   │         │  │  Lambda Validator │   │
+│  │  (Local Storage) │   │         │  │  (Job validation) │   │
+│  └──────────────────┘   │         │  └───────────────────┘   │
+│           ▲             │         │           ▲              │
+│           │             │         │           │              │
+│  ┌──────────────────┐   │         │  ┌───────────────────┐   │
+│  │  Local Agent     │◄──┼─────────┼─►│     SQS Queue     │   │
+│  │  (Polling Job)   │   │Encrypted│  │  (Job Storage)    │   │
+│  └──────────────────┘   │ Tunnel  │  └───────────────────┘   │
+│           ▲             │(AES-256)│           ▲              │
+│           │             │         │           │              │
+│  ┌──────────────────┐   │         │  ┌───────────────────┐   │
+│  │  Docker Engine   │   │         │  │  CloudWatch       │   │
+│  │  (Pipeline Exec) │   │         │  │  (Audit Logging)  │   │
+│  └──────────────────┘   │         │  └───────────────────┘   │
+│                         │         │                          │
+└─────────────────────────┘         └──────────────────────────┘
+   Data Locality                      Cloud Coordination
+```
+
+### Components
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **Pipeline Core** | Python 3.9 + BEDOPS + BEDTools | Genomic analysis |
+| **Containerization** | Docker 20.10+ | Reproducible execution |
+| **Container Registry** | AWS ECR | Image storage |
+| **Local Agent** | Python 3.8+ boto3 | Job polling & execution |
+| **Job Queue** | AWS SQS | Persistent messaging |
+| **Validation** | AWS Lambda (Python 3.9) | Parameter validation |
+| **Notifications** | Lambda + SES | Email reporting |
+| **Monitoring** | AWS CloudWatch | Logs & metrics |
+| **Encryption** | KMS + AES-256 | Data protection |
+| **Access Control** | AWS IAM + STS | Role-based security |
 
 ------------------------------------------------------------------------
 
 ## Features
 
--   **Automated Data Downloads**: Fetch genomic and annotation datasets
-    from trusted sources (Ensembl, COSMIC, miRGene, EnhancerAtlas, UCSC,
-    etc.).\
--   **Choice-Based Menu System**: Interactive CLI for step-by-step
-    control over data downloads and processing.\
--   **Environment Setup**: Easy setup via Conda with required
-    dependencies listed.\
--   **Modular Scripts**: Each dataset and preprocessing step is isolated
-    in its own module under the `scripts/` folder.
+### Data Pipeline
+- **Automated Data Downloads**: Fetch genomic datasets from Ensembl, COSMIC, miRGene, EnhancerAtlas, UCSC, etc.
+- **Choice-Based Menu System**: Interactive CLI for step-by-step control over data processing
+- **Modular Architecture**: Each dataset and preprocessing step isolated in its own module
+- **Data Filtering**: Apply biological constraints (distance from genes, enhancers, miRNAs)
+
+### Infrastructure
+- **Multi-Institutional Access**: Unified web portal across three universities
+- **Data Locality**: Genomic data remains on campus (no costly uploads)
+- **Containerized Reproducibility**: Identical outputs across different campus environments
+- **Scalable Design**: Independent campus agents enable natural parallelism
+- **Security**: Defense-in-depth with encryption, IAM, and audit trails
+- **Cost Efficiency**: ~$112/month vs $3,350/month on-premise (30x savings)
 
 ------------------------------------------------------------------------
 
 ## Folder Structure
 
-``` bash
-GSH_Automation/
+```
+.
+├── DEPLOYMENT_GUIDE.md          # Complete deployment and usage guide
+├── GSH_Automation/              # Core pipeline code
+│   ├── main.py                  # Interactive menu (dev/testing)
+│   ├── local_agent.py           # AWS Local Agent service
+│   ├── gsh_submit.py            # CLI tool for job submission
+│   ├── gsh_status.py            # CLI tool for status checking
+│   ├── gsh_logs.py              # CLI tool for log retrieval
+│   ├── Dockerfile               # Container definition
+│   ├── requirements.txt          # Python dependencies
+│   ├── config.template.json     # Configuration template
+│   ├── scripts/                 # Modular data download scripts
+│   │   ├── ensembl.py           # Ensembl dataset
+│   │   ├── cosmic.py            # COSMIC dataset
+│   │   ├── mirgene.py           # miRGene dataset
+│   │   ├── orthologs.py         # Ortholog data
+│   │   ├── enhanceratlas.py     # EnhancerAtlas regions
+│   │   ├── liftover.py          # Coordinate liftover
+│   │   ├── rna_files.py         # lncRNA/tRNA files
+│   │   ├── gaps_ftp.py          # UCSC Gaps data
+│   │   └── wget.py              # Additional downloads
+│   └── settings.py              # Configuration
 │
-├── main.py                 # Entry point for running the pipeline (choice-based menu system)
-├── config/
-│   ├── setting.py          #url links
-├── scripts/                # Contains all modular scripts for downloading/processing data
-│   ├── ensembl.py          # Downloads Ensembl dataset
-│   ├── cosmic.py           # Downloads COSMIC dataset
-│   ├── mirgene.py          # Downloads miRGene dataset
-│   ├── orthologs.py        # Downloads Orthologs data
-│   ├── enhanceratlas.py    # Downloads EnhancerAtlas data
-│   ├── liftover.py         # Runs UCSC Liftover for genome coordinate mapping
-│   ├── cosmic_env.py       # Handles COSMIC environment-specific downloads
-│   ├── rna_files.py        # Downloads lncRNA and tRNA files
-│   ├── gaps_ftp.py         # Downloads UCSC Gaps FTP data
-│   └── wget.py             # Downloads additional chromosome info via WGET
-│
-└── README.md               # Documentation (this file)
+└── gsh-deployment/              # AWS infrastructure
+    ├── lambda_job_validator.py  # Lambda: Job validation
+    ├── lambda_notification_handler.py  # Lambda: Email notifications
+    ├── infrastructure/
+    │   └── cloudformation.yaml  # IaC template (SQS, Lambda, IAM, KMS, etc.)
+    └── package.json             # Node dependencies
 ```
 
 ------------------------------------------------------------------------
 
-## Choice-Based Menu System
+## Quick Start
 
-The **`main.py`** script provides an **interactive choice-based menu
-system**.\
-This design ensures flexibility by letting users run specific tasks
-independently instead of executing the entire pipeline at once.
+### For Administrators
 
-### Example Menu
+1. **Read the Deployment Guide**:
+   ```bash
+   cat ../DEPLOYMENT_GUIDE.md
+   ```
 
-    ==== Choose from the Menu ====
-    1. Download Ensembl data
-    2. Download miRGene data
-    3. Download Orthologs data
-    4. Download COSMIC data
-    5. Download EnhancerAtlas (retain dr.bed)
-    6. Run Liftover on dr.bed file
-    7. Download lncRNA and tRNA files
-    8. USCS_Gaps_FTP
-    9. WGET
-    10. Exit
+2. **Follow Administrator Setup (Section 2)**:
+   - Install prerequisites
+   - Configure AWS credentials
+   - Build and push Docker image
+   - Deploy Lambda functions
+   - Start Local Agent service
 
--   Enter the corresponding number to run a specific module.
--   Example: typing `1` runs the Ensembl download script
-    (`scripts/ensembl.py`).
--   You can perform multiple tasks in sequence, and exit the pipeline
-    anytime by choosing option `10`.
+### For Researchers
+
+#### Option A: Web Portal (Recommended)
+1. Navigate to https://gsh-pipeline.edu
+2. Authenticate with university credentials
+3. Submit job with genome path and parameters
+4. Monitor progress on dashboard
+5. Download results when complete
+
+#### Option B: Command-Line Interface
+```bash
+# Submit job
+gsh-submit --genome /data/genomes/danio_rerio.bed --dist-genes 50000
+
+# Check status
+gsh-status a1b2c3d4-e5f6-7890-abcd-ef1234567890
+
+# View logs
+gsh-logs a1b2c3d4-e5f6-7890-abcd-ef1234567890 --follow
+```
 
 ------------------------------------------------------------------------
 
-## Setup Instructions
+## Development
 
-### 1. Clone the Repository
+### Local Testing
 
-``` bash
-git clone https://github.com/TheOfficialBug/GSH_Automation.git
-cd GSH_Automation
-```
+For development and testing, use the interactive menu system:
 
-### 2. Create a Conda Environment
+```bash
+# Create environment
+conda create -n gsh_dev python=3.9 -y
+conda activate gsh_dev
 
-We recommend using Conda to manage dependencies.
-
-``` bash
-conda create -n gsh_env python=3.9 -y
-conda activate gsh_env
-```
-
-### 3. Install Dependencies
-
-Install required Python packages:
-
-``` bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-If `requirements.txt` is not available, install packages as needed
-(e.g., `requests`, `biopython`, etc.).
-
-------------------------------------------------------------------------
-
-## Running the Pipeline
-
-Run the main script to start the choice-based menu system:
-
-``` bash
+# Run interactive menu
 python main.py
 ```
 
-Follow the on-screen prompts to download and process datasets as
-required.
+### Production Deployment
+
+The pipeline runs in Docker containers orchestrated by the Local Agent:
+
+```bash
+# Build container
+docker build -t gsh-pipeline:latest .
+
+# Push to ECR
+docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/gsh-pipeline:latest
+
+# Deploy infrastructure
+cd gsh- -deployment
+aws cloudformation deploy \
+  --template-file infrastructure/cloudformation.yaml \
+  --stack-name gsh-pipeline \
+  --capabilities CAPABILITY_NAMED_IAM
+```
 
 ------------------------------------------------------------------------
 
+## Configuration
+
+Copy the configuration template and customize for your campus:
+
+```bash
+cp config.template.json ~/.gsh/config.json
+# Edit ~/.gsh/config.json with:
+#  - AWS account ID and region
+#  - SQS queue URL
+#  - ECR registry URI
+#  - Local genome file paths
+#  - Institution-specific settings
+```
+
+------------------------------------------------------------------------
+
+## Security
+
+### Encryption
+- **In Transit**: AES-256 via PrivateLink/VPN (NIST FIPS 197)
+- **At Rest**: AWS KMS managed keys for S3 storage
+- **Local Filesystem**: Campus IT controls physical security
+
+### Access Control
+- **Authentication**: AWS IAM with time-limited tokens (1-hour TTL)
+- **Authorization**: Path-based isolation (/jobs/researcher/*)
+- **Audit Logging**: CloudWatch logs all system events
+- **Defense-in-Depth**: Multiple security layers
+
+### Compliance
+- **HIPAA**: Supports HIPAA requirements for genomic data
+- **IRB**: Meets institutional review board standards
+- **Data Sovereignty**: Raw genomic data never leaves campus
+
+------------------------------------------------------------------------
+
+## Performance & Costs
+
+### Execution Times
+- **Pipeline Runtime**: 5-35 minutes (depending on genome size)
+- **End-to-End**: <40 minutes from submission to results
+- **Lambda Response**: ~2 seconds per request
+
+### Cost Analysis (50 jobs/month)
+- Lambda: $1
+- SQS: $0.40
+- CloudWatch: $10
+- S3: $100
+- **Total: $112/month** (vs $3,350/month on-premise)
+
+------------------------------------------------------------------------
+
+## References
+
+[1] Aznauryan, E., et al. "Discovery and Validation of Genomic Safe Harbors." *Genome Biology and Evolution*, 2016.  
+[2] NIST. "FIPS 197: Advanced Encryption Standard (AES)." 2001.  
+[3] Amazon Web Services. "AWS Lambda Developer Guide." https://docs.aws.amazon.com/lambda/  
+[4] Amazon Web Services. "AWS IAM User Guide." https://docs.aws.amazon.com/iam/  
+[5] Amazon Web Services. "AWS CloudWatch User Guide." https://docs.aws.amazon.com/cloudwatch/  
+[6] Quinlan, A. R. and Hall, I. M. "BEDTools: utilities for genomic features." *Bioinformatics*, 2010.  
+[7] Neph, S., et al. "BEDOPS: high-performance genomic feature operations." *Bioinformatics*, 2012.  
+[8] Merkel, D. "Docker: Lightweight Linux Containers." *Linux Journal*, 2014.  
+
+------------------------------------------------------------------------
+
+## Support
+
+- **Documentation**: See [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md)
+- **Issues**: Submit to project GitHub repository
+- **Email**: gsh-support@[domain].edu
+- **Status Page**: https://status.gsh-pipeline.edu
+
+------------------------------------------------------------------------
+
+## Version History
+
+- **1.0.0** (May 2026): Initial release
+  - Hybrid AWS architecture
+  - Multi-institutional support
+  - Containerized pipeline
+  - Full security implementation
+
+------------------------------------------------------------------------
+
+## Authors
+
+[Name 1] - AWS Infrastructure (Lambda, SQS, IAM, VPC) - 40%  
+[Name 2] - Local Agent & Docker - 35%  
+[Name 3] - Encryption & Audit Logging - 25%  
+
+University of Pennsylvania | UT Austin | Iowa State University
+
+------------------------------------------------------------------------
+
+#   G S H _ A W S - H y b r i d  
+ 
