@@ -1,0 +1,44 @@
+{
+  "aws_region": "us-east-1",
+  "sqs_queue_url": "https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/gsh-pipeline-jobs",
+  "ecr_registry_uri": "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/gsh-pipeline",
+  "local_genome_path": "/data/genomes",
+  "output_path": "/data/output",
+  "local_agent_service": "gsh-agent",
+  "log_level": "INFO",
+  "sqs_poll_interval_seconds": 30,
+  "docker_network": "bridge",
+  "max_concurrent_jobs": 4,
+  "cloudwatch_namespace": "GSH/Pipeline",
+  "kms_key_id": "alias/gsh-pipeline-key",
+  "institutions": {
+    "penn": {
+      "name": "University of Pennsylvania",
+      "vpc_endpoint": "vpce-0123456789abcdef0",
+      "vpn_subnet": "10.0.1.0/24"
+    },
+    "utaustin": {
+      "name": "UT Austin",
+      "vpc_endpoint": "vpce-0123456789abcdef1",
+      "vpn_subnet": "10.0.2.0/24"
+    },
+    "iowastate": {
+      "name": "Iowa State University",
+      "vpc_endpoint": "vpce-0123456789abcdef2",
+      "vpn_subnet": "10.0.3.0/24"
+    }
+  },
+  "security": {
+    "encrypt_at_rest": true,
+    "encryption_algorithm": "AES-256",
+    "sts_token_ttl_hours": 1,
+    "audit_logging_enabled": true,
+    "cloudtrail_enabled": true,
+    "require_https": true
+  },
+  "costs": {
+    "monthly_budget_usd": 200,
+    "alert_threshold_percent": 80,
+    "estimated_jobs_per_month": 50
+  }
+}
